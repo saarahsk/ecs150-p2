@@ -4,18 +4,51 @@
 
 #include "queue.h"
 
+typedef struct node* node_t;
+
+struct node {
+  void *data;
+  node_t next;
+};
+
 struct queue {
-	/* TODO Phase 1 */
+	node_t head;
+  node_t tail;
+  int length;
 };
 
 queue_t queue_create(void)
 {
-	/* TODO Phase 1 */
+  // allocate the queue
+  queue_t q = malloc(sizeof(struct queue));
+
+  if(q == NULL) {
+    return NULL;
+  }
+
+  // initialize the queue values
+  q->head = NULL;
+  q->tail = NULL;
+  q->length = 0;
+
+  // return address of the created queue
+  return q;
 }
 
 int queue_destroy(queue_t queue)
 {
-	/* TODO Phase 1 */
+  // first check to see if the pointer is already pointing to NULL, ,
+  // or if the queue is not empty
+	if(queue == NULL || queue->length > 0) {
+    return -1;
+  } else {
+    free(queue);
+    // check that the memory was freed successfully
+    if(queue == NULL) {
+      return 0;
+    }
+    return -1;
+  }
 }
 
 int queue_enqueue(queue_t queue, void *data)
@@ -42,4 +75,12 @@ int queue_length(queue_t queue)
 {
 	/* TODO Phase 1 */
 }
+/* TODO: delete after queue is working */
+void queue_print(queue_t queue) {
 
+}
+
+
+int main() {
+  return 0;
+}
