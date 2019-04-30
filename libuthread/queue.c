@@ -227,7 +227,7 @@ void queue_print(queue_t queue) {
 
 
 int main() {
-
+  printf("compiled!\n"); 
 
   return 0;
 }

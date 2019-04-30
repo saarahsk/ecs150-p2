@@ -1,15 +1,27 @@
-# Target library
-# lib := libuthread.a
-#
-# all: $(lib)
-#
-# ## TODO: Phase 1.1
+lib := libuthread.a
+
+all: $(lib)
+
+$(lib) : queue.o
+	ar rcs $(lib) queue.o
 
 all: queue.o
-	gcc -o queue -Wall  -Werror -Wno-deprecated queue.o
+	gcc -o queue -Wall -Werror  -Werror -Wno-deprecated queue.o
 
-sshell.o: queue.c
+queue.o: queue.c
 	gcc -c queue.c
 
-clean:
-	rm queue *.o
+
+
+
+
+## TODO: Phase 1.1
+
+# all: queue.o
+# 	gcc -o queue -Wall  -Werror -Wno-deprecated queue.o
+#
+# queue.o: queue.c
+# 	gcc -c queue.c
+#
+# clean:
+# 	rm queue *.o
