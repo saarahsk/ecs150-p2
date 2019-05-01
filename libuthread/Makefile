@@ -1,12 +1,21 @@
 lib := libuthread.a
 
+flags := -Wall -pedantic
+
+# Mac OS X has deprecated
+ifeq ($(shell uname -s), Linux)
+flags += -Werror
+endif
+
+objects := context.o preempt.o queue.o uthread.o
+
 all: $(lib)
 
-$(lib): queue.o
-	ar rcs $(lib) queue.o
+$(lib): $(objects)
+	ar rcs $(lib) $(objects)
 
-queue.o: queue.c
-	gcc -c queue.c
+%.o: %.c
+	gcc -c $(flags) -o $@ $<
 
 clean:
-	rm *.o
+	rm -f $(objects) $(lib)
