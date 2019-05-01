@@ -13,7 +13,7 @@ struct node {
 };
 
 struct queue {
-	node_t head;
+  node_t head;
   node_t tail;
   int length;
 };
@@ -38,7 +38,7 @@ queue_t queue_create(void) {
 int queue_destroy(queue_t queue) {
   // first check to see if the pointer is already pointing to NULL, ,
   // or if the queue is not empty
-	if(queue == NULL || queue->length > 0) {
+  if(queue == NULL || queue->length > 0) {
     return -1;
   }
 
@@ -193,7 +193,7 @@ int queue_iterate(queue_t queue, queue_func_t func, void *arg, void **data) {
 }
 
 int queue_length(queue_t queue) {
-	if(queue == NULL) {
+  if(queue == NULL) {
     return -1;
   } else {
     return queue->length;
