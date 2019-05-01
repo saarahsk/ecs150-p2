@@ -25,7 +25,7 @@ struct tcb {
 };
 
 uthread_t next_thread_id = 1;
-queue_t queue = NULL;
+queue_t thread_queue = NULL;
 tcb_t active_thread = NULL;
 
 void uthread_yield(void)
@@ -68,9 +68,9 @@ tcb_t first_initialization() {
   thread->state = READY;
   thread->stack = NULL; // we don't know :(
 
-  int result = queue_enqueue(queue, thread);
+  int result = queue_enqueue(thread_queue, thread);
   if (result == -1) {
-    fprintf(stderr, "Error enqueuing main thread");
+    fprintf(stderr, "Error: couldn't enqueue main thread\n");
     return NULL;
   }
 
@@ -80,33 +80,78 @@ tcb_t first_initialization() {
 int uthread_create(uthread_func_t func, void *arg)
 {
   int first = 0;
-  if (queue == NULL) {
+  if (thread_queue == NULL) {
     first = 1;
-    queue = queue_create();
-    if (queue == NULL) {
+    thread_queue = queue_create();
+    if (thread_queue == NULL) {
       return -1;
     }
   }
 
   // create the user thread and enqueue
   tcb_t thread = uthread_create_helper(func, arg);
-  int result = queue_enqueue(queue, thread);
+  int result = queue_enqueue(thread_queue, thread);
   if (result == -1) {
-    fprintf(stderr, "Error enqueuing new thread");
+    fprintf(stderr, "Error: couldn't enqueue new thread\n");
     return -1;
   }
 
   if (first) {
     tcb_t main_thread = first_initialization();
+    active_thread = thread;
     uthread_ctx_switch(&main_thread->context, &thread->context);
   }
 
   return thread->tid;
 }
 
+int find(void *data, void *arg) {
+  tcb_t thread = (tcb_t)data;
+  int* tid = (int*)arg;
+
+  if (thread->tid == *tid) {
+    return 1;
+  }
+
+  return 0;
+}
+
 void uthread_exit(int retval)
 {
-  /* TODO Phase 2 */
+  int length = queue_length(thread_queue);
+  if (length == 0) {
+    fprintf(stderr, "Error: called uthread_exit without a thread queue\n");
+    return;
+  }
+
+  tcb_t thread = NULL;
+  int result = queue_iterate(thread_queue, find, &active_thread->tid, (void**)&thread);
+  if (result == -1) {
+    fprintf(stderr, "Error: failed iterating queue\n");
+    return;
+  }
+
+  result = queue_delete(thread_queue, thread);
+  if (result == -1) {
+    fprintf(stderr, "Error: failed deleting thread from queue\n");
+    return;
+  }
+
+  result = queue_dequeue(thread_queue, (void**)&thread);
+  if (result == -1) {
+    fprintf(stderr, "Error: no more threads to dequeue\n");
+    return;
+  }
+
+  result = queue_enqueue(thread_queue, active_thread);
+  if (result == -1) {
+    fprintf(stderr, "Error: failed enqueuing active queue back onto thread queue\n");
+    return;
+  }
+
+  tcb_t prev_thread = active_thread;
+  active_thread = thread;
+  uthread_ctx_switch(&prev_thread->context, &active_thread->context);
 }
 
 int uthread_join(uthread_t tid, int *retval)
