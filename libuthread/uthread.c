@@ -30,7 +30,22 @@ tcb_t active_thread = NULL;
 
 void uthread_yield(void)
 {
-  /* TODO Phase 2 */
+  int result = queue_enqueue(thread_queue, active_thread);
+  if (result == -1) {
+    fprintf(stderr, "Error: failed enqueuing active queue back onto thread queue\n");
+    return;
+  }
+
+  tcb_t thread = NULL;
+  result = queue_dequeue(thread_queue, (void**)&thread);
+  if (result == -1) {
+    fprintf(stderr, "Error: failed dequeing when yielding\n");
+    return;
+  }
+
+  tcb_t prev_thread = active_thread;
+  active_thread = thread;
+  uthread_ctx_switch(&prev_thread->context, &active_thread->context);
 }
 
 uthread_t uthread_self(void)
