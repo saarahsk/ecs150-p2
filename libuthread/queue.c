@@ -40,16 +40,18 @@ int queue_destroy(queue_t queue) {
   // or if the queue is not empty
 	if(queue == NULL || queue->length > 0) {
     return -1;
-  } else {
-    free(queue);
-    // check that the memory was freed successfully
-    if(queue == NULL) {
-      return 0;
-    }
-    return -1;
   }
-}
 
+  // delete all nodes in the queue
+  for(int i = 0; i < queue->length; i++) {
+    node_t temp = queue->head;
+    queue->head = queue->head->next;
+    free(temp);
+  }
+
+  free(queue);
+  return 0;
+}
 
 int queue_enqueue(queue_t queue, void *data)
 {
@@ -83,8 +85,7 @@ int queue_enqueue(queue_t queue, void *data)
   }
 
   // after adding a node, increment the queue length
-  (queue->length)++;
-
+  queue->length++;
   return 0;
 }
 
@@ -95,63 +96,53 @@ int queue_dequeue(queue_t queue, void **data) {
     return -1;
   }
 
-  node_t node = queue->head;
-
   if(queue->length == 0) {
     return -1;
   }
-  node_t next = node->next; // the node that will be the new head
 
-  // update the queue head and the length of the queue
-  queue->head = next;
-  (queue->length)--;
+  node_t temp = queue->head;
+  queue->head = queue->head->next; // update the queue head and the length of the queue
 
-  *data = node->data;
-  free(data); // free the pointer once the data is set
+  *data = temp->data;
+  queue->length--;
+  free(temp); // free the extra queue data, not the user data
 
   return 0;
 }
 
-/*
- * queue_delete - Delete data item
- * @queue: Queue in which to delete item
- * @data: Data to delete
- *
- * Find in queue @queue, the first (ie oldest) item equal to @data and delete
- * this item.
- *
- * Return: -1 if @queue or @data are NULL, of if @data was not found in the
- * queue. 0 if @data was found and deleted from @queue.
- */
 int queue_delete(queue_t queue, void *data) {
   if(queue == NULL || data == NULL) {
     return -1;
   }
   // start the search with the first element of the queue
-  node_t node = queue->head;
+  node_t previous = NULL;
+  node_t current = queue->head;
 
-  while(node != NULL) {
-    // if the data is found
-    // check that the next node exists before checking for data equality
-    if(node->next != NULL) {
-      // check next node's data with provided data
-      if(node->next->data == data) {
-        // if the data matches, delete next node
-        node_t next = node->next->next; // this will be the node replacing next
-        node_t freeNode = node->next; //this is the memory that must be freed
-        node->next = next;
-        free(freeNode);
-      } else {
-        // go to the next node
-        node = node->next;
+  int result = -1;
+  while(current != NULL) {
+    if (current->data == data) {
+      // found the data we are looking for
+      if (current == queue->head) {
+        // special case: if the data we are looking for is at the front, then previous is invalid
+        queue->head = current->next;
+        free(current);
       }
-    } else {
-      // the next does not exist, therefore data is not found
-      return -1;
+      else {
+        // general case: just make previous' next go to current's next
+        previous->next = current->next;
+        free(current);
+      }
+
+      result = 0;
+      break;
     }
-    return -1;
+
+    // move along the queue: previous should always be one behind current
+    previous = current;
+    current = current->next;
   }
-  return -1;
+
+  return result;
 }
 
 
@@ -184,16 +175,18 @@ int queue_iterate(queue_t queue, queue_func_t func, void *arg, void **data) {
     return -1;
   }
 
-  void *nodeData = current->data;
   while(current != NULL) {
     // perform the function on the queue element
-    int funcVal = func(nodeData, arg);
+    int funcVal = func(current->data, arg);
 
     if(funcVal == 1) {
+      if (data != NULL) {
+        *data = current->data;
+      }
       break;
     }
+
     current = current->next;
-    nodeData = current->data;
   }
 
   return 0;
@@ -205,29 +198,4 @@ int queue_length(queue_t queue) {
   } else {
     return queue->length;
   }
-}
-
-// testing the queue based on integers only
-/* TODO: delete after queue is working */
-void queue_print(queue_t queue) {
-
-  node_t node = queue->head;
-  if (node == NULL) {
-    printf("The queue is empty");
-
-  }
-
-  int *val = node->data;
-  while(node != NULL) {
-    printf("%d", *val);
-    node = node->next;
-  }
-
-}
-
-
-int main() {
-  printf("compiled!\n"); 
-
-  return 0;
 }
