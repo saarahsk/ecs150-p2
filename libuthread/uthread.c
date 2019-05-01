@@ -14,30 +14,19 @@
 typedef struct tcb* tcb_t;
 
 // this enum lets us keep track of the current state of the thread
-enum threadState { READY, RUNNING, BLOCKED, ZOMBIE };
+enum ThreadState { READY, RUNNING, BLOCKED, ZOMBIE };
 
-//create a struct that will hold each thread's execution content
-
+//create a struct that will hold each thread's execution state and details
 struct tcb {
-  uthread_t tid; // this is the thread id
-  enum threadState; // the current state of the thread
-  uthread_ctx_t context; //the context of the thread
-  void *stack; // the stack belonging to the thread
+  uthread_t tid;
+  enum ThreadState state;
+  uthread_ctx_t context;
+  void* stack;
 };
 
-// this function initializes the uthread library by registering
-// the single execution flow of the application as the main thread.
+queue_t queue = NULL;
 
-int uthread_init() {
-  // create enough memory for the thread
-  tcb_t main = malloc(sizeof(struct tcb));
-
-  // initialize the main thread
-  main->tid = 0;
-  main->threadState = READY;
-  main->content = NULL;
-
-
+int main_thread(void* arg) {
 
 }
 
@@ -51,9 +40,51 @@ uthread_t uthread_self(void)
 	/* TODO Phase 2 */
 }
 
+tcb_t uthread_create_helper(uthread_func_t func, void* arg) {
+  // create enough memory for the thread
+  tcb_t thread = malloc(sizeof(struct tcb));
+  thread->tid = 0;
+  thread->state = READY;
+
+  thread->stack = uthread_ctx_alloc_stack();
+  if (thread->stack == NULL) {
+    // make sure we don't have any memory leaks on errors
+    free(thread);
+    return NULL;
+  }
+
+  int result = uthread_ctx_init(&thread->context, thread->stack, func, arg);
+  if (result == -1) {
+    // make sure we don't have any memory leaks on errors
+    uthread_ctx_destroy_stack(thread->stack);
+    return NULL;
+  }
+
+  return thread;
+}
+
 int uthread_create(uthread_func_t func, void *arg)
 {
-	/* TODO Phase 2 */
+  if (queue == NULL) {
+    queue = queue_create();
+    if (queue == NULL) {
+      return -1;
+    }
+
+    tcb_t main = uthread_create_helper(main_thread, NULL);
+    int result = queue_enqueue(queue, main);
+    if (result == -1) {
+      fprintf(stderr, "Error enqueuing main thread");
+      exit(1);
+    }
+  }
+
+  tcb_t thread = uthread_create_helper(func, arg);
+  int result = queue_enqueue(queue, thread);
+  if (result == -1) {
+    fprintf(stderr, "Error enqueuing new thread");
+    exit(1);
+  }
 }
 
 void uthread_exit(int retval)
