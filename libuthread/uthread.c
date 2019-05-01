@@ -24,26 +24,24 @@ struct tcb {
   void* stack;
 };
 
+uthread_t next_thread_id = 1;
 queue_t queue = NULL;
-
-int main_thread(void* arg) {
-
-}
+tcb_t active_thread = NULL;
 
 void uthread_yield(void)
 {
-	/* TODO Phase 2 */
+  /* TODO Phase 2 */
 }
 
 uthread_t uthread_self(void)
 {
-	/* TODO Phase 2 */
+  return active_thread->tid;
 }
 
 tcb_t uthread_create_helper(uthread_func_t func, void* arg) {
   // create enough memory for the thread
   tcb_t thread = malloc(sizeof(struct tcb));
-  thread->tid = 0;
+  thread->tid = next_thread_id++;
   thread->state = READY;
 
   thread->stack = uthread_ctx_alloc_stack();
@@ -63,37 +61,57 @@ tcb_t uthread_create_helper(uthread_func_t func, void* arg) {
   return thread;
 }
 
+tcb_t first_initialization() {
+  // create a tcb for the main thread
+  tcb_t thread = malloc(sizeof(struct tcb));
+  thread->tid = 0;
+  thread->state = READY;
+  thread->stack = NULL; // we don't know :(
+
+  int result = queue_enqueue(queue, thread);
+  if (result == -1) {
+    fprintf(stderr, "Error enqueuing main thread");
+    return NULL;
+  }
+
+  return thread;
+}
+
 int uthread_create(uthread_func_t func, void *arg)
 {
+  int first = 0;
   if (queue == NULL) {
+    first = 1;
     queue = queue_create();
     if (queue == NULL) {
       return -1;
     }
-
-    tcb_t main = uthread_create_helper(main_thread, NULL);
-    int result = queue_enqueue(queue, main);
-    if (result == -1) {
-      fprintf(stderr, "Error enqueuing main thread");
-      exit(1);
-    }
   }
 
+  // create the user thread and enqueue
   tcb_t thread = uthread_create_helper(func, arg);
   int result = queue_enqueue(queue, thread);
   if (result == -1) {
     fprintf(stderr, "Error enqueuing new thread");
-    exit(1);
+    return -1;
   }
+
+  if (first) {
+    tcb_t main_thread = first_initialization();
+    uthread_ctx_switch(&main_thread->context, &thread->context);
+  }
+
+  return thread->tid;
 }
 
 void uthread_exit(int retval)
 {
-	/* TODO Phase 2 */
+  /* TODO Phase 2 */
 }
 
 int uthread_join(uthread_t tid, int *retval)
 {
-	/* TODO Phase 2 */
-	/* TODO Phase 3 */
+  /* TODO Phase 2 */
+  /* TODO Phase 3 */
+  return 0;
 }
