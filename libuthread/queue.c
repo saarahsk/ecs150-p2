@@ -7,18 +7,21 @@
 
 typedef struct node* node_t;
 
-struct node {
+struct node
+{
   void *data;
   node_t next;
 };
 
-struct queue {
+struct queue
+{
   node_t head;
   node_t tail;
   int length;
 };
 
-queue_t queue_create(void) {
+queue_t queue_create(void)
+{
   // allocate the queue
   queue_t q = malloc(sizeof(struct queue));
 
@@ -35,7 +38,8 @@ queue_t queue_create(void) {
   return q;
 }
 
-int queue_destroy(queue_t queue) {
+int queue_destroy(queue_t queue)
+{
   // first check to see if the pointer is already pointing to NULL, ,
   // or if the queue is not empty
   if (queue == NULL || queue->length > 0) {
@@ -90,8 +94,8 @@ int queue_enqueue(queue_t queue, void *data)
 }
 
 
-int queue_dequeue(queue_t queue, void **data) {
-
+int queue_dequeue(queue_t queue, void **data)
+{
   if (queue == NULL || data == NULL) {
     return -1;
   }
@@ -157,8 +161,8 @@ int queue_delete(queue_t queue, void *data) {
   return result;
 }
 
-int queue_iterate(queue_t queue, queue_func_t func, void *arg, void **data) {
-
+int queue_iterate(queue_t queue, queue_func_t func, void *arg, void **data)
+{
   node_t current = queue->head;
   // if the queue doesnt have anything in it, dont do anything and return -1
   if (current == NULL || func == NULL) {
@@ -182,7 +186,8 @@ int queue_iterate(queue_t queue, queue_func_t func, void *arg, void **data) {
   return 0;
 }
 
-int queue_length(queue_t queue) {
+int queue_length(queue_t queue)
+{
   if (queue == NULL) {
     return -1;
   } else {
