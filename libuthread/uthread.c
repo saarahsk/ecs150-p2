@@ -31,6 +31,17 @@ queue_t zombie_queue = NULL;
 
 tcb_t active_thread = NULL;
 
+int find_by_id(void *data, void *arg) {
+  tcb_t thread = (tcb_t)data;
+  int* tid = (int*)arg;
+
+  if (thread->tid == *tid) {
+    return 1;
+  }
+
+  return 0;
+}
+
 void uthread_yield(void)
 {
   int result = queue_enqueue(active_queue, active_thread);
@@ -114,17 +125,6 @@ int uthread_create(uthread_func_t func, void *arg)
   }
 
   return thread->tid;
-}
-
-int find(void *data, void *arg) {
-  tcb_t thread = (tcb_t)data;
-  int* tid = (int*)arg;
-
-  if (thread->tid == *tid) {
-    return 1;
-  }
-
-  return 0;
 }
 
 void uthread_exit(int retval)
