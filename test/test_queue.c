@@ -6,8 +6,6 @@
 
 #include "queue.h"
 
-//create the queue that we will be testing
-
 void test_queue(){
 
 }

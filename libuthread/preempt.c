@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 
 #include "preempt.h"
@@ -23,17 +24,17 @@
 void handlerFunction(int signum) {
   // uthread_yield();
   static int count = 0;
- printf ("timer expired %d times\n", ++count);
+  printf ("timer expired %d times\n", ++count);
 }
 
 void preempt_disable(void)
 {
-	/* TODO Phase 4 */
+  /* TODO Phase 4 */
 }
 
 void preempt_enable(void)
 {
-	/* TODO Phase 4 */
+  /* TODO Phase 4 */
 }
 
 
@@ -44,7 +45,7 @@ void preempt_start(void)
   struct sigaction sa;
   struct itimerval timer;
 
-  memset (&sa, 0, sizeof (sa));
+  memset(&sa, 0, sizeof(sa));
   sa.sa_handler = &handlerFunction;
 
   sigaction(SIGVTALRM, &sa, NULL);
@@ -55,9 +56,7 @@ void preempt_start(void)
   timer.it_interval.tv_sec = 0;
   timer.it_interval.tv_usec = 100000/HZ;
 
-  settimer(ITIMER_VIRTUAL, &timer, NULL);
-
-
+  setitimer(ITIMER_VIRTUAL, &timer, NULL);
 }
 
 int main() {
