@@ -123,16 +123,20 @@ int uthread_create(uthread_func_t func, void *arg)
   if (active_queue == NULL) {
     active_queue = queue_create();
     if (active_queue == NULL) {
-      return -1;
-    }
-
-    zombie_queue = queue_create();
-    if (zombie_queue == NULL) {
+      fprintf(stderr, "Error: couldn't create active queue\n");
       return -1;
     }
 
     tcb_t main_thread = first_initialization();
     active_thread = main_thread;
+  }
+
+  if (zombie_queue == NULL) {
+    zombie_queue = queue_create();
+    if (zombie_queue == NULL) {
+      fprintf(stderr, "Error: couldn't create zombie queue\n");
+      return -1;
+    }
   }
 
   // create the user thread and enqueue
@@ -206,6 +210,7 @@ int uthread_join(uthread_t tid, int *retval)
     }
 
     // check in the active queue for the thread
+    thread = NULL;
     queue_iterate(zombie_queue, find_by_id, &tid, (void**)&thread);
     if (thread == NULL) {
       // tid doesn't exist in active queue as well as zombie queue?
@@ -230,6 +235,16 @@ int uthread_join(uthread_t tid, int *retval)
 
     preempt_enable();
     break; // don't try to continue to search for zombie threads once we have joined all
+  }
+
+  if (queue_length(active_queue) == 0) {
+    queue_destroy(active_queue);
+    active_queue = NULL;
+  }
+
+  if (queue_length(zombie_queue) == 0) {
+    queue_destroy(zombie_queue);
+    zombie_queue = NULL;
   }
 
   return 0;
