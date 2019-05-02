@@ -22,19 +22,26 @@
 
 // use the signal to force the current thread to yield
 void handlerFunction(int signum) {
-  // uthread_yield();
-  static int count = 0;
-  printf ("timer expired %d times\n", ++count);
+  uthread_yield();
 }
 
 void preempt_disable(void)
 {
-  /* TODO Phase 4 */
+  struct sigaction ignore;
+
+  // the signal that we want to block
+
+  ignore.sa_handler = SIG_IGN;
+  sigaction(SIGVTALRM, &ignore, NULL);
+
 }
 
 void preempt_enable(void)
 {
-  /* TODO Phase 4 */
+    struct sigaction signal;
+
+    signal.sa_handler = &handlerFunction;
+    sigaction(SIGVTALRM, &signal, NULL); 
 }
 
 
@@ -57,8 +64,4 @@ void preempt_start(void)
   timer.it_interval.tv_usec = 100000/HZ;
 
   setitimer(ITIMER_VIRTUAL, &timer, NULL);
-}
-
-int main() {
-  preempt_start();
 }
