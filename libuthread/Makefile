@@ -1,6 +1,6 @@
 lib := libuthread.a
 
-flags := -Wall -pedantic
+flags := -Wall -pedantic -g -O0
 
 # Mac OS X has deprecated
 ifeq ($(shell uname -s), Linux)
