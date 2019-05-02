@@ -114,37 +114,48 @@ int queue_delete(queue_t queue, void *data) {
   if (queue == NULL || data == NULL) {
     return -1;
   }
+
   // start the search with the first element of the queue
   node_t previous = NULL;
   node_t current = queue->head;
 
   int result = -1;
   while (current != NULL) {
-    if (current->data == data) {
-      // found the data we are looking for
-      if (current == queue->head) {
-        // special case: if the data we are looking for is at the front, then previous is invalid
-        queue->head = current->next;
-        free(current);
-      }
-      else {
-        // general case: just make previous' next go to current's next
-        previous->next = current->next;
-        free(current);
-      }
-
-      result = 0;
-      break;
+    if (current->data != data) {
+      // move along the queue: previous should always be one behind current
+      previous = current;
+      current = current->next;
     }
 
-    // move along the queue: previous should always be one behind current
-    previous = current;
-    current = current->next;
+    // found the data we are looking for
+    if (queue->head == queue->tail) {
+      // only one element in the queue so just delete it all
+      queue->head = NULL;
+      queue->tail = NULL;
+    }
+    else if (current == queue->head) {
+      // data is at the front of the queue
+      queue->head = current->next;
+    }
+    else if (current == queue->tail) {
+      // data is at the end of the queue
+      queue->tail = previous;
+      queue->tail->next = NULL;
+    }
+    else {
+      // general case: just make previous' next go to current's next
+      previous->next = current->next;
+      free(current);
+    }
+
+    queue->length--;
+    free(current);
+    result = 0;
+    break;
   }
 
   return result;
 }
-
 
 int queue_iterate(queue_t queue, queue_func_t func, void *arg, void **data) {
 
