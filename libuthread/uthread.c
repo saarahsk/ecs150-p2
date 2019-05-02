@@ -240,9 +240,7 @@ int uthread_join(uthread_t tid, int *retval)
   if (queue_length(active_queue) == 0) {
     queue_destroy(active_queue);
     active_queue = NULL;
-  }
 
-  if (queue_length(zombie_queue) == 0) {
     queue_destroy(zombie_queue);
     zombie_queue = NULL;
   }
