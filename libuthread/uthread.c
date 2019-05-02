@@ -160,6 +160,7 @@ void uthread_exit(int retval)
   // the current thread is done, so it is a zombie and needs to wait for someone to join it
   preempt_disable();
   active_thread->state = ZOMBIE;
+  active_thread->retval = retval;
   int result = queue_enqueue(zombie_queue, active_thread);
   if (result == -1) {
     fprintf(stderr, "Error: failed enqueuing exited thread onto zombie thread\n");
