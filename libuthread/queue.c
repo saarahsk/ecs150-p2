@@ -22,7 +22,7 @@ queue_t queue_create(void) {
   // allocate the queue
   queue_t q = malloc(sizeof(struct queue));
 
-  if(q == NULL) {
+  if (q == NULL) {
     return NULL;
   }
 
@@ -38,12 +38,12 @@ queue_t queue_create(void) {
 int queue_destroy(queue_t queue) {
   // first check to see if the pointer is already pointing to NULL, ,
   // or if the queue is not empty
-  if(queue == NULL || queue->length > 0) {
+  if (queue == NULL || queue->length > 0) {
     return -1;
   }
 
   // delete all nodes in the queue
-  for(int i = 0; i < queue->length; i++) {
+  for (int i = 0; i < queue->length; i++) {
     node_t temp = queue->head;
     queue->head = queue->head->next;
     free(temp);
@@ -55,7 +55,7 @@ int queue_destroy(queue_t queue) {
 
 int queue_enqueue(queue_t queue, void *data)
 {
-  if(queue == NULL || data == NULL) {
+  if (queue == NULL || data == NULL) {
     return -1;
   }
 
@@ -63,7 +63,7 @@ int queue_enqueue(queue_t queue, void *data)
   node_t node = malloc(sizeof(struct node));
 
   // check that malloc worked
-  if(node == NULL) {
+  if (node == NULL) {
     return -1;
   }
   node->data = data;
@@ -71,7 +71,7 @@ int queue_enqueue(queue_t queue, void *data)
 
   // if an initialized queue doesnt have any elements
   // add to the front of the queue
-  if(queue->length == 0) {
+  if (queue->length == 0) {
     queue->head = node;
     queue->tail = node;
   } else if (queue->length > 0) {
@@ -92,11 +92,11 @@ int queue_enqueue(queue_t queue, void *data)
 
 int queue_dequeue(queue_t queue, void **data) {
 
-  if(queue == NULL || data == NULL) {
+  if (queue == NULL || data == NULL) {
     return -1;
   }
 
-  if(queue->length == 0) {
+  if (queue->length == 0) {
     return -1;
   }
 
@@ -111,7 +111,7 @@ int queue_dequeue(queue_t queue, void **data) {
 }
 
 int queue_delete(queue_t queue, void *data) {
-  if(queue == NULL || data == NULL) {
+  if (queue == NULL || data == NULL) {
     return -1;
   }
   // start the search with the first element of the queue
@@ -119,7 +119,7 @@ int queue_delete(queue_t queue, void *data) {
   node_t current = queue->head;
 
   int result = -1;
-  while(current != NULL) {
+  while (current != NULL) {
     if (current->data == data) {
       // found the data we are looking for
       if (current == queue->head) {
@@ -171,15 +171,15 @@ int queue_iterate(queue_t queue, queue_func_t func, void *arg, void **data) {
 
   node_t current = queue->head;
   // if the queue doesnt have anything in it, dont do anything and return -1
-  if(current == NULL || func == NULL) {
+  if (current == NULL || func == NULL) {
     return -1;
   }
 
-  while(current != NULL) {
+  while (current != NULL) {
     // perform the function on the queue element
     int funcVal = func(current->data, arg);
 
-    if(funcVal == 1) {
+    if (funcVal == 1) {
       if (data != NULL) {
         *data = current->data;
       }
@@ -193,7 +193,7 @@ int queue_iterate(queue_t queue, queue_func_t func, void *arg, void **data) {
 }
 
 int queue_length(queue_t queue) {
-  if(queue == NULL) {
+  if (queue == NULL) {
     return -1;
   } else {
     return queue->length;
