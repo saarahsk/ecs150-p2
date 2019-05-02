@@ -1,13 +1,13 @@
 /*
- * Thread creation and yielding test
+ * Thread creation and joining test
  *
  * Tests the creation of multiples threads and the fact that a parent thread
  * should get returned to before its child is executed. The way the printing,
- * thread creation and yielding is done, the program should output:
+ * thread creation and joining is done, the program should output:
  *
- * thread1
- * thread2
  * thread3
+ * thread2
+ * thread1
  */
 
 #include <stdio.h>

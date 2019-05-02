@@ -206,6 +206,7 @@ int uthread_join(uthread_t tid, int *retval)
     }
 
     // check in the active queue for the thread
+    thread = NULL;
     queue_iterate(zombie_queue, find_by_id, &tid, (void**)&thread);
     if (thread == NULL) {
       // tid doesn't exist in active queue as well as zombie queue?
