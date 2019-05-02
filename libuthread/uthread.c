@@ -226,9 +226,10 @@ int uthread_join(uthread_t tid, int *retval)
 
     free(thread);
     active_thread->state = READY;
-    preempt_enable();
+    uthread_yield();
 
-    break;
+    preempt_enable();
+    break; // don't try to continue to search for zombie threads once we have joined all
   }
 
   return 0;
