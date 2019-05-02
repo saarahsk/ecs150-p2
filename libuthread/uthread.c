@@ -46,6 +46,8 @@ int find_by_id(void *data, void *arg) {
 
 void uthread_yield(void)
 {
+  preempt_disable();
+
   // blocked threads shouldn't be assumed to be ready
   if (active_thread->state != BLOCKED) {
     active_thread->state = READY;
@@ -69,6 +71,7 @@ void uthread_yield(void)
   tcb_t prev_thread = active_thread;
   active_thread = thread;
   active_thread->state = RUNNING;
+  preempt_enable();
 
   // context switch to the new thread
   uthread_ctx_switch(&prev_thread->context, &active_thread->context);
@@ -134,11 +137,14 @@ int uthread_create(uthread_func_t func, void *arg)
 
   // create the user thread and enqueue
   tcb_t thread = uthread_create_helper(func, arg);
+
+  preempt_disable();
   int result = queue_enqueue(active_queue, thread);
   if (result == -1) {
     fprintf(stderr, "Error: couldn't enqueue new thread\n");
     return -1;
   }
+  preempt_enable();
 
   return thread->tid;
 }
@@ -152,6 +158,7 @@ void uthread_exit(int retval)
   }
 
   // the current thread is done, so it is a zombie and needs to wait for someone to join it
+  preempt_disable();
   active_thread->state = ZOMBIE;
   int result = queue_enqueue(zombie_queue, active_thread);
   if (result == -1) {
@@ -167,6 +174,7 @@ void uthread_exit(int retval)
   }
 
   active_thread->state = RUNNING;
+  preempt_enable();
 
   struct tcb thread; // current thread is dying so don't care about its context anymore
   uthread_ctx_switch(&thread.context, &active_thread->context);
@@ -208,6 +216,7 @@ int uthread_join(uthread_t tid, int *retval)
       *retval = thread->retval;
     }
 
+    preempt_disable();
     int result = queue_delete(zombie_queue, thread);
     if (result == -1) {
       fprintf(stderr, "Error: cannot delete from zombie queue\n");
@@ -216,6 +225,8 @@ int uthread_join(uthread_t tid, int *retval)
 
     free(thread);
     active_thread->state = READY;
+    preempt_enable();
+
     break;
   }
 
