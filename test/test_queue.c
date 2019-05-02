@@ -60,10 +60,6 @@ void test_dequeue_noqueue()
   assert(queue_dequeue(q, (void **)&ptr) == -1);
 }
 
-void test_delete() {
-
-}
-
 void test_iterate() {
   queue_t q;
   int data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -87,12 +83,12 @@ void test_iterate() {
   assert(ptr == &data[3]);
 }
 
+
 int main()
 {
     test_enqueue();
     test_iterate();
     test_dequeue_noqueue();
-    test_delete();
 
     printf("All queue tests passed\n");
     return 0;
