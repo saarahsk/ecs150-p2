@@ -94,7 +94,7 @@ tcb_t first_initialization() {
   // create a tcb for the main thread
   tcb_t thread = malloc(sizeof(struct tcb));
   thread->tid = 0;
-  thread->state = READY;
+  thread->state = RUNNING;
   thread->stack = NULL; // we don't know :(
   return thread;
 }
