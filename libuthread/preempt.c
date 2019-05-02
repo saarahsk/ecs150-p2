@@ -52,9 +52,9 @@ void preempt_start(void)
 
   // set timer to go off 100 times per second
   timer.it_value.tv_sec = 0;
-  timer.it_value.tv_usec = 100000/HZ;
+  timer.it_value.tv_usec = 1000000 / HZ;
   timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = 100000/HZ;
+  timer.it_interval.tv_usec = 1000000 / HZ;
 
   setitimer(ITIMER_VIRTUAL, &timer, NULL);
 }
