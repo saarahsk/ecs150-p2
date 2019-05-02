@@ -22,6 +22,7 @@ struct tcb {
   enum ThreadState state;
   uthread_ctx_t context;
   void* stack;
+  int retval;
 };
 
 uthread_t next_thread_id = 1;
@@ -36,6 +37,7 @@ int find_by_id(void *data, void *arg) {
   int* tid = (int*)arg;
 
   if (thread->tid == *tid) {
+    // found our thread, so stop iteration
     return 1;
   }
 
@@ -44,12 +46,19 @@ int find_by_id(void *data, void *arg) {
 
 void uthread_yield(void)
 {
+  // blocked threads shouldn't be assumed to be ready
+  if (active_thread->state != BLOCKED) {
+    active_thread->state = READY;
+  }
+
+  // place current thread at the end of the active threads
   int result = queue_enqueue(active_queue, active_thread);
   if (result == -1) {
     fprintf(stderr, "Error: failed enqueuing active queue back onto thread queue\n");
     return;
   }
 
+  // take the first thread off of the currently pending threads
   tcb_t thread = NULL;
   result = queue_dequeue(active_queue, (void**)&thread);
   if (result == -1) {
@@ -59,6 +68,9 @@ void uthread_yield(void)
 
   tcb_t prev_thread = active_thread;
   active_thread = thread;
+  active_thread->state = RUNNING;
+
+  // context switch to the new thread
   uthread_ctx_switch(&prev_thread->context, &active_thread->context);
 }
 
@@ -72,6 +84,7 @@ tcb_t uthread_create_helper(uthread_func_t func, void* arg) {
   tcb_t thread = malloc(sizeof(struct tcb));
   thread->tid = next_thread_id++;
   thread->state = READY;
+  thread->retval = -1;
 
   thread->stack = uthread_ctx_alloc_stack();
   if (thread->stack == NULL) {
@@ -95,7 +108,10 @@ tcb_t first_initialization() {
   tcb_t thread = malloc(sizeof(struct tcb));
   thread->tid = 0;
   thread->state = RUNNING;
-  thread->stack = NULL; // we don't know :(
+  thread->stack = NULL; // we don't know how to get a stack pointer :(
+  thread->retval = -1;
+
+  // don't enqueue the main (active) thread or we will eventually try to swap with ourselves
   return thread;
 }
 
@@ -135,28 +151,73 @@ void uthread_exit(int retval)
     return;
   }
 
+  // the current thread is done, so it is a zombie and needs to wait for someone to join it
+  active_thread->state = ZOMBIE;
   int result = queue_enqueue(zombie_queue, active_thread);
   if (result == -1) {
     fprintf(stderr, "Error: failed enqueuing exited thread onto zombie thread\n");
     return;
   }
 
+  // get the next runnable thread and run it
   result = queue_dequeue(active_queue, (void**)&active_thread);
   if (result == -1) {
     fprintf(stderr, "Error: no more threads to dequeue\n");
     return;
   }
 
-  struct tcb thread;
+  active_thread->state = RUNNING;
+
+  struct tcb thread; // current thread is dying so don't care about its context anymore
   uthread_ctx_switch(&thread.context, &active_thread->context);
 }
 
 int uthread_join(uthread_t tid, int *retval)
 {
-  while (queue_length(active_queue) != 0) {
-    uthread_yield();
+  if (tid == 0) {
+    fprintf(stderr, "Error: cannot join the main thread\n");
+    return -1; // we cannot join the main thread
   }
 
-  /* TODO Phase 3 */
+  if (active_thread->tid == tid) {
+    fprintf(stderr, "Error: cannot join your own thread\n");
+    return -1; // we cannot join ourselves
+  }
+
+  while (1) {
+    tcb_t thread = NULL;
+
+    // check in the active queue for the thread
+    queue_iterate(active_queue, find_by_id, &tid, (void**)&thread);
+    if (thread != NULL) {
+      // thread is still running, current thread is blocked on it finishing
+      active_thread->state = BLOCKED;
+      uthread_yield();
+      continue; // ensure that when we get rescheduled, we try the search again
+    }
+
+    // check in the active queue for the thread
+    queue_iterate(zombie_queue, find_by_id, &tid, (void**)&thread);
+    if (thread == NULL) {
+      // tid doesn't exist in active queue as well as zombie queue?
+      fprintf(stderr, "Error: cannot join a non-existant thread\n");
+      return -1; // we cannot join a non-existent thread
+    }
+
+    if (retval != NULL) {
+      *retval = thread->retval;
+    }
+
+    int result = queue_delete(zombie_queue, thread);
+    if (result == -1) {
+      fprintf(stderr, "Error: cannot delete from zombie queue\n");
+      return -1;
+    }
+
+    free(thread);
+    active_thread->state = READY;
+    break;
+  }
+
   return 0;
 }
