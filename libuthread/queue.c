@@ -146,27 +146,6 @@ int queue_delete(queue_t queue, void *data) {
 }
 
 
-/*
- * queue_iterate - Iterate through a queue
- * @queue: Queue to iterate through
- * @func: Function to call on each queue item
- * @arg: (Optional) Extra argument to be passed to the callback function
- * @data: (Optional) Address of data pointer where an item can be received
- *
- * This function iterates through the items in the queue @queue and calls the
- * given callback function @func on each item. The callback function receives
- * the current data item and @arg.
- *
- * If @func returns 1 for a specific item, the iteration stops prematurely. In
- * this case only, if @data is different than NULL, then @data receives the data
- * item where the iteration was stopped.
- *
- * We assume that queue_delete() cannot be called inside @func on the current
- * data item. Doing so would result in undefined behavior.
- *
- * Return: -1 if @queue or @func are NULL, 0 otherwise.
- */
-
 int queue_iterate(queue_t queue, queue_func_t func, void *arg, void **data) {
 
   node_t current = queue->head;
