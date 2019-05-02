@@ -10,15 +10,10 @@
 #include "preempt.h"
 #include "uthread.h"
 
-/*
- * Frequency of preemption
- * 100Hz is 100 times per second
- */
+// Frequency of preemption 100Hz is 100 times per second
 #define HZ 100
 
-
-// need timer to fire off 100 times per second, so 1 sec/100
-// which is 100000/HZ
+struct itimerval timer;
 
 // use the signal to force the current thread to yield
 void handlerFunction(int signum) {
@@ -27,21 +22,18 @@ void handlerFunction(int signum) {
 
 void preempt_disable(void)
 {
-  struct sigaction ignore;
-
-  // the signal that we want to block
-
-  ignore.sa_handler = SIG_IGN;
-  sigaction(SIGVTALRM, &ignore, NULL);
-
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = SIG_IGN;
+  sigaction(SIGVTALRM, &sa, NULL);
 }
 
 void preempt_enable(void)
 {
-    struct sigaction signal;
-
-    signal.sa_handler = &handlerFunction;
-    sigaction(SIGVTALRM, &signal, NULL); 
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = &handlerFunction;
+  sigaction(SIGVTALRM, &sa, NULL);
 }
 
 
@@ -49,19 +41,12 @@ void preempt_enable(void)
 // http://www.informit.com/articles/article.aspx?p=23618&seqNum=14
 void preempt_start(void)
 {
-  struct sigaction sa;
-  struct itimerval timer;
-
-  memset(&sa, 0, sizeof(sa));
-  sa.sa_handler = &handlerFunction;
-
-  sigaction(SIGVTALRM, &sa, NULL);
-
   // set timer to go off 100 times per second
   timer.it_value.tv_sec = 0;
   timer.it_value.tv_usec = 1000000 / HZ;
   timer.it_interval.tv_sec = 0;
   timer.it_interval.tv_usec = 1000000 / HZ;
-
   setitimer(ITIMER_VIRTUAL, &timer, NULL);
+
+  preempt_enable();
 }
