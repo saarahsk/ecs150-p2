@@ -3,7 +3,7 @@
 #  You shouldn't have to touch the rest (but you can read it to understand!)
 programs := \
 	uthread_hello.x \
-	uthread_queue.x \
+	test_queue.x \
 	uthread_join.x \
 	uthread_yield.x
 
