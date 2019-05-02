@@ -21,7 +21,7 @@ int main(void)
 
 	tid = uthread_create(hello, NULL);
 	uthread_join(tid, NULL);
-	printf("OMG IT WORKS!\n");
+	printf("Join works!\n");
 
 	return 0;
 }
